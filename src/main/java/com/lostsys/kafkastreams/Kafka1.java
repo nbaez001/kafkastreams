@@ -10,26 +10,23 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 
 public class Kafka1 {
+	public static void main(String[] args) {
+		Properties props = new Properties();
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, "lostsys-kafka-sample");
+		props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+		props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+		props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
 
-  public static void main(String[] args) {
-    Properties props = new Properties();
-    props.put(StreamsConfig.APPLICATION_ID_CONFIG, "lostsys-kafka-sample");
-    props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "192.168.1.101:9092");
-    props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-    props.put(StreamsConfig.APPLICATION_ID_CONFIG, Serdes.String().getClass());
+		final StreamsBuilder builder = new StreamsBuilder();
+		final KStream<String, String> source = builder.stream("test-stream-in");
+		source.flatMapValues(value -> {
+			ArrayList<String> r = new ArrayList<String>();
+			r.add("{word: '" + value + "', length: " + value.length() + ", words: " + value.split(" ").length + "}");
+			return r;
 
-    final StreamsBuilder builder = new StreamsBuilder();
-    final KStream<String, String> source = builder.stream("test-stream-in");
+		}).to("test-stream-out");
 
-    source.flatMapValues(value -> {
-      ArrayList<String> r = new ArrayList<String>();
-      r.add("{ word: '" + value + "', length: " + value.length() + ", words: "
-          + value.split(" ").length + "}");
-      return r;
-    }).to("test-stream-out");
-    
-    final KafkaStreams streams = new KafkaStreams(builder.build(), props);
-    streams.start();
-  }
-
+		final KafkaStreams streams = new KafkaStreams(builder.build(), props);
+		streams.start();
+	}
 }
